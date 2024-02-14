@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: order
+      POSTGRES_USER: ${POSTGRES_ROOT_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
+    networks:
+      - postgres_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+networks:
+  postgres_network:
+    driver: bridge
+volumes:
+  postgres_data:
