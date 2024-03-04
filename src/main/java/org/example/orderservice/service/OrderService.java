@@ -21,12 +21,11 @@ import java.util.UUID;
 public class OrderService {
   private final OrderRepository orderRepository;
 
-  private final WebClient webClient;
+  private final WebClient.Builder webClientBuilder;
 
-  @Autowired
-  public OrderService(OrderRepository orderRepository, WebClient webClient) {
+  public OrderService(OrderRepository orderRepository, WebClient.Builder webClientBuilder) {
     this.orderRepository = orderRepository;
-    this.webClient = webClient;
+    this.webClientBuilder = webClientBuilder;
   }
 
   public String placeOrder(OrderRequest orderRequest) {
@@ -43,9 +42,10 @@ public class OrderService {
             .toList();
 
     // Call inventory-service to check if item is in stock
-    InventoryResponse[] inventoryResponseList = webClient
+    InventoryResponse[] inventoryResponseList = webClientBuilder
+            .build()
             .get()
-            .uri("http://localhost:8082/api/inventory",
+            .uri("http://inventory-service/api/inventory",
                     uriBuilder -> uriBuilder.queryParam("skuCodeList", skuCodeList)
                             .build())
             .retrieve()
