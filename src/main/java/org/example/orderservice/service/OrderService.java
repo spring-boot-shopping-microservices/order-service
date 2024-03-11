@@ -1,5 +1,6 @@
 package org.example.orderservice.service;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.InventoryResponse;
 import org.example.orderservice.dto.ItemRequest;
@@ -23,11 +24,13 @@ public class OrderService {
 
   private final WebClient.Builder webClientBuilder;
 
+  @Autowired
   public OrderService(OrderRepository orderRepository, WebClient.Builder webClientBuilder) {
     this.orderRepository = orderRepository;
     this.webClientBuilder = webClientBuilder;
   }
 
+  @CircuitBreaker(name = "inventory", fallbackMethod = "placeOrderFallback")
   public String placeOrder(OrderRequest orderRequest) {
     Order order = Order.builder()
             .orderNumber(generateOrderNumber())
@@ -78,5 +81,9 @@ public class OrderService {
             .price(itemRequests.getPrice())
             .quantity(itemRequests.getQuantity())
             .build();
+  }
+
+  public String placeOrderFallback(OrderRequest orderRequest, RuntimeException runtimeException) {
+    return "Something went wrong. Please try again later!";
   }
 }
