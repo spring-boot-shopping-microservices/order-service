@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.InventoryResponse;
 import org.example.orderservice.dto.ItemRequest;
 import org.example.orderservice.dto.OrderRequest;
-import org.example.orderservice.event.OrderNotification;
 import org.example.orderservice.model.Item;
 import org.example.orderservice.model.Order;
 import org.example.orderservice.repository.OrderRepository;
@@ -26,14 +25,14 @@ public class OrderService {
 
   private final WebClient.Builder webClientBuilder;
 
-  private final KafkaTemplate<String, OrderNotification> kafkaTemplate;
+  private final KafkaTemplate<String, String> kafkaTemplate;
 
   @Autowired
   public OrderService(
           OrderRepository orderRepository,
           WebClient.Builder webClientBuilder,
           KafkaTemplate<String,
-                  OrderNotification> kafkaTemplate
+                  String> kafkaTemplate
   ) {
     this.orderRepository = orderRepository;
     this.webClientBuilder = webClientBuilder;
@@ -71,7 +70,7 @@ public class OrderService {
     if (Boolean.TRUE.equals(allItemsInStock)) {
       orderRepository.save(order);
 
-      kafkaTemplate.send("notificationTopic", new OrderNotification(order.getOrderNumber()));
+      kafkaTemplate.send("notificationTopic", order.getOrderNumber());
 
       log.info("order created : {}", order);
 
