@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.InventoryResponse;
 import org.example.orderservice.dto.ItemRequest;
 import org.example.orderservice.dto.OrderRequest;
+import org.example.orderservice.event.OrderNotification;
 import org.example.orderservice.model.Item;
 import org.example.orderservice.model.Order;
 import org.example.orderservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -24,10 +26,18 @@ public class OrderService {
 
   private final WebClient.Builder webClientBuilder;
 
+  private final KafkaTemplate<String, OrderNotification> kafkaTemplate;
+
   @Autowired
-  public OrderService(OrderRepository orderRepository, WebClient.Builder webClientBuilder) {
+  public OrderService(
+          OrderRepository orderRepository,
+          WebClient.Builder webClientBuilder,
+          KafkaTemplate<String,
+                  OrderNotification> kafkaTemplate
+  ) {
     this.orderRepository = orderRepository;
     this.webClientBuilder = webClientBuilder;
+    this.kafkaTemplate = kafkaTemplate;
   }
 
   @CircuitBreaker(name = "inventory", fallbackMethod = "placeOrderFallback")
@@ -60,6 +70,8 @@ public class OrderService {
 
     if (Boolean.TRUE.equals(allItemsInStock)) {
       orderRepository.save(order);
+
+      kafkaTemplate.send("notificationTopic", new OrderNotification(order.getOrderNumber()));
 
       log.info("order created : {}", order);
 
