@@ -1,20 +1,15 @@
 version: "3.8"
 services:
   postgres:
-    image: postgres:latest
-    container_name: order-service
+    image: postgres
+    container_name: postgres-order-service
     ports:
       - "5433:5432"
     environment:
       POSTGRES_DB: order
       POSTGRES_USER: ${POSTGRES_ROOT_USERNAME}
       POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
-    networks:
-      - postgres_network
+      PGDATA: /data/postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-networks:
-  postgres_network:
-    driver: bridge
-volumes:
-  postgres_data:
+      - ./postgres-order-service:/data/postgres
+    restart: unless-stopped
